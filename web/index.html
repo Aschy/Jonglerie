@@ -253,7 +253,7 @@ function showLogin(){ $('#app').classList.add('hidden'); $('#login').classList.r
 function showApp(){
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
   const av=$('#ava');
-  av.textContent=''; av.style.backgroundImage=`url(/assets/${USER.username}.png?v=2)`;
+  av.textContent=''; av.style.backgroundImage=`url(/assets/${USER.username}.png?v=3)`;
   av.style.backgroundSize='cover'; av.style.backgroundPosition='top center';
   $('#uname').textContent=USER.display_name;
   $('#urole').textContent=`${USER.role} · ${USER.height_cm} cm · ballon ${USER.ball_diam_cm} cm`;
@@ -304,7 +304,7 @@ async function loadProfile(){
       <div class="fc tier-${p.tier}">
         <div class="fc-stage">
           <div class="fc-ovr"><div class="n">${ovr}</div><div class="p">${p.style.toUpperCase()}</div><div class="d"></div><div class="role">⚽</div></div>
-          <img class="fc-player" src="${p.avatar}?v=2" alt="">
+          <img class="fc-player" src="${p.avatar}?v=3" alt="">
           ${empty}
         </div>
         <div class="fc-name">${p.user.display_name}</div>
