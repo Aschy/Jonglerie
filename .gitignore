@@ -1,0 +1,16 @@
+# Modèles (lourds, à régénérer : voir README)
+*.onnx
+*.pt
+*.engine
+# Artefacts Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# Sorties de travail
+out/
+out_yolo/
+*.npy
+# Frames extraites
+frames/
+allframes/

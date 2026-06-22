@@ -1,0 +1,202 @@
+{
+  "metrics": {
+    "duration_s": 15.7,
+    "total_juggles": 24,
+    "tempo_touches_per_s": 1.53,
+    "left_foot_side": 11,
+    "right_foot_side": 13,
+    "balance_LR": 0.92,
+    "by_body_part": {
+      "tete": 0,
+      "poitrine": 0,
+      "cuisse/genou": 9,
+      "pied": 15
+    },
+    "rhythm_regularity": 0.67,
+    "rhythm_cv": 0.33,
+    "control_score": 0.47,
+    "variety": 0.48,
+    "drops": 0,
+    "longest_streak": 24,
+    "mean_interval_s": 0.6,
+    "touches": [
+      {
+        "frame": 1,
+        "t": 0.03,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 21
+      },
+      {
+        "frame": 25,
+        "t": 0.83,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 162
+      },
+      {
+        "frame": 41,
+        "t": 1.37,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 107
+      },
+      {
+        "frame": 53,
+        "t": 1.77,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 23
+      },
+      {
+        "frame": 69,
+        "t": 2.3,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": -1
+      },
+      {
+        "frame": 86,
+        "t": 2.87,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 30
+      },
+      {
+        "frame": 103,
+        "t": 3.43,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 52
+      },
+      {
+        "frame": 119,
+        "t": 3.97,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": -22
+      },
+      {
+        "frame": 131,
+        "t": 4.37,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 73
+      },
+      {
+        "frame": 152,
+        "t": 5.07,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 30
+      },
+      {
+        "frame": 171,
+        "t": 5.7,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 72
+      },
+      {
+        "frame": 181,
+        "t": 6.03,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": -79
+      },
+      {
+        "frame": 213,
+        "t": 7.1,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 144
+      },
+      {
+        "frame": 235,
+        "t": 7.83,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 104
+      },
+      {
+        "frame": 256,
+        "t": 8.53,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 10
+      },
+      {
+        "frame": 290,
+        "t": 9.67,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 90
+      },
+      {
+        "frame": 310,
+        "t": 10.33,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 140
+      },
+      {
+        "frame": 329,
+        "t": 10.97,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 109
+      },
+      {
+        "frame": 345,
+        "t": 11.5,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 146
+      },
+      {
+        "frame": 357,
+        "t": 11.9,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 2
+      },
+      {
+        "frame": 377,
+        "t": 12.57,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 94
+      },
+      {
+        "frame": 396,
+        "t": 13.2,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": -75
+      },
+      {
+        "frame": 408,
+        "t": 13.6,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": -47
+      },
+      {
+        "frame": 417,
+        "t": 13.9,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": -31
+      }
+    ]
+  },
+  "score": {
+    "score_0_100": 73,
+    "grade": "A",
+    "breakdown": {
+      "base": 222.0,
+      "bonus": 116.8,
+      "penalty": 0
+    }
+  }
+}

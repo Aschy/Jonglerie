@@ -1,0 +1,118 @@
+{
+  "metrics": {
+    "duration_s": 7.5,
+    "total_juggles": 12,
+    "tempo_touches_per_s": 1.6,
+    "left_foot_side": 7,
+    "right_foot_side": 5,
+    "balance_LR": 0.83,
+    "by_body_part": {
+      "tete": 0,
+      "poitrine": 0,
+      "cuisse/genou": 4,
+      "pied": 8
+    },
+    "rhythm_regularity": 0.54,
+    "rhythm_cv": 0.46,
+    "control_score": 0.55,
+    "variety": 0.46,
+    "drops": 0,
+    "longest_streak": 12,
+    "mean_interval_s": 0.66,
+    "touches": [
+      {
+        "frame": 2,
+        "t": 0.07,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 74
+      },
+      {
+        "frame": 22,
+        "t": 0.73,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 70
+      },
+      {
+        "frame": 54,
+        "t": 1.8,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": -74
+      },
+      {
+        "frame": 65,
+        "t": 2.17,
+        "zone": "cuisse/genou",
+        "side": "gauche",
+        "height_px": 125
+      },
+      {
+        "frame": 73,
+        "t": 2.43,
+        "zone": "cuisse/genou",
+        "side": "droite",
+        "height_px": 103
+      },
+      {
+        "frame": 81,
+        "t": 2.7,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 12
+      },
+      {
+        "frame": 107,
+        "t": 3.57,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 47
+      },
+      {
+        "frame": 121,
+        "t": 4.03,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 59
+      },
+      {
+        "frame": 152,
+        "t": 5.07,
+        "zone": "pied",
+        "side": "gauche",
+        "height_px": 25
+      },
+      {
+        "frame": 186,
+        "t": 6.2,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": 0
+      },
+      {
+        "frame": 202,
+        "t": 6.73,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": -17
+      },
+      {
+        "frame": 220,
+        "t": 7.33,
+        "zone": "pied",
+        "side": "droite",
+        "height_px": -3
+      }
+    ]
+  },
+  "score": {
+    "score_0_100": 67,
+    "grade": "B",
+    "breakdown": {
+      "base": 112.0,
+      "bonus": 100.6,
+      "penalty": 0
+    }
+  }
+}
