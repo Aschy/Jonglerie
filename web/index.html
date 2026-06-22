@@ -115,6 +115,51 @@
   .sinfo{flex:1;min-width:0}.sinfo b{font-size:14.5px}.sinfo span{display:block;color:var(--mut);font-size:12px;margin-top:1px}
   .sscore{text-align:right}.sscore b{font-size:18px}.sscore span{display:block;color:var(--mut);font-size:11.5px}
   .empty{padding:34px 20px;text-align:center;color:var(--mut);font-size:14px}.empty .ic{font-size:40px;margin-bottom:10px}
+  /* ---------- CARTE FC ---------- */
+  .fcwrap{display:flex;flex-direction:column;align-items:center}
+  .fc{position:relative;width:300px;max-width:88vw;aspect-ratio:300/468;border-radius:24px;padding:16px 16px 10px;overflow:hidden;color:var(--ct);box-shadow:0 20px 50px rgba(0,0,0,.55)}
+  .fc::before{content:"";position:absolute;inset:0;background:var(--cbg);z-index:0}
+  .fc::after{content:"";position:absolute;inset:0;z-index:1;mix-blend-mode:overlay;background:radial-gradient(120% 55% at 50% -5%,rgba(255,255,255,.35),transparent 55%)}
+  .fc>*{position:relative;z-index:2}
+  .fc.tier-bronze{--cbg:linear-gradient(160deg,#9a6638,#3c2716);--ct:#f3dcc2}
+  .fc.tier-silver{--cbg:linear-gradient(160deg,#cdd6df,#737d88);--ct:#20262c}
+  .fc.tier-gold{--cbg:linear-gradient(160deg,#f9e394,#bb8a37);--ct:#3a2a06}
+  .fc.tier-elite{--cbg:linear-gradient(160deg,#2a2b33,#0a0a0e);--ct:#ffd24a}
+  .fc-stage{height:252px;position:relative}
+  .fc-ovr{position:absolute;top:6px;left:8px;text-align:center;line-height:1}
+  .fc-ovr .n{font-size:44px;font-weight:900;letter-spacing:-1.5px}
+  .fc-ovr .p{font-size:13px;font-weight:800;margin-top:3px;letter-spacing:.5px}
+  .fc-ovr .d{width:32px;height:2px;background:var(--ct);opacity:.5;margin:7px auto}
+  .fc-ovr .role{font-size:17px}
+  .fc-player{position:absolute;right:-10px;bottom:0;height:252px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+  .fc-name{text-align:center;font-weight:900;font-size:23px;letter-spacing:3px;text-transform:uppercase;border-top:2px solid var(--ct);padding-top:8px;margin-top:2px}
+  .fc-attrs{display:grid;grid-template-columns:1fr 1fr;gap:5px 24px;margin-top:11px;padding:0 8px}
+  .fc-attrs .a{display:flex;align-items:baseline;gap:9px;font-weight:800;font-size:16px}
+  .fc-attrs .a b{width:24px;text-align:right;font-variant-numeric:tabular-nums}
+  .fc-attrs .a span{font-size:12px;font-weight:700;opacity:.85;letter-spacing:.4px}
+  .fc-empty{position:absolute;left:14px;right:14px;bottom:12px;text-align:center;font-size:12.5px;font-weight:600;opacity:.9;z-index:3}
+  .tierchip{margin-top:12px;font-size:12px;font-weight:800;letter-spacing:.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--stroke);color:var(--mut)}
+
+  /* ---------- NIVEAU / XP ---------- */
+  .lvl{width:100%;margin-top:20px;padding:16px 18px}
+  .lvl .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .lvl .lt{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .lvl .badge{background:var(--grad);color:#06210a;font-weight:900;font-size:13px;padding:3px 10px;border-radius:8px}
+  .lvl .xptxt{color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .xpbar{height:12px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+  .xpfill{height:100%;background:var(--grad);border-radius:99px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);box-shadow:0 0 16px rgba(124,255,84,.5)}
+
+  /* ---------- CAPACITÉS ---------- */
+  .unl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .u{padding:12px;border-radius:15px;border:1px solid var(--stroke);background:var(--card);display:flex;gap:10px;align-items:flex-start}
+  .u.on{border-color:rgba(124,255,84,.45);background:rgba(124,255,84,.07)}
+  .u .uic{font-size:23px;filter:grayscale(1);opacity:.4;flex:0 0 auto}
+  .u.on .uic{filter:none;opacity:1}
+  .u .t{flex:1;min-width:0}.u .t b{font-size:13px;display:block;line-height:1.15}.u .t span{font-size:10.5px;color:var(--mut)}
+  .u .ut{margin-top:6px;height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+  .u .uf{height:100%;background:var(--grad);border-radius:99px}
+  .seclabel{font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);font-weight:700;margin:22px 2px 2px}
+
   footer{text-align:center;color:var(--mut);font-size:11.5px;margin-top:26px;opacity:.7}
 </style>
 </head>
@@ -146,9 +191,13 @@
       <button class="lo" id="logout">Déconnexion</button>
     </div>
     <div class="tabs">
-      <button id="tabA" class="on" onclick="setTab('analyser')">Analyser</button>
+      <button id="tabC" class="on" onclick="setTab('carte')">Carte</button>
+      <button id="tabA" onclick="setTab('analyser')">Analyser</button>
       <button id="tabH" onclick="setTab('historique')">Historique</button>
     </div>
+
+    <!-- ---- CARTE (profil joueur FC) ---- -->
+    <div id="view-carte"></div>
 
     <!-- ---- ANALYSER ---- -->
     <div id="view-analyser">
@@ -203,10 +252,12 @@ async function boot(){
 function showLogin(){ $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
 function showApp(){
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
-  $('#ava').textContent=(USER.display_name||'?')[0].toUpperCase();
+  const av=$('#ava');
+  av.textContent=''; av.style.backgroundImage=`url(/assets/${USER.username}.png)`;
+  av.style.backgroundSize='cover'; av.style.backgroundPosition='top center';
   $('#uname').textContent=USER.display_name;
   $('#urole').textContent=`${USER.role} · ${USER.height_cm} cm · ballon ${USER.ball_diam_cm} cm`;
-  setTab('analyser'); loadHistory();
+  setTab('carte'); loadProfile();
 }
 function logout(){ TOKEN=null; USER=null; localStorage.removeItem('jongle_token'); showLogin(); }
 $('#logout').onclick=logout;
@@ -227,10 +278,61 @@ $('#lform').onsubmit=async e=>{
 /* ---------- tabs ---------- */
 function setTab(t){
   TAB=t;
-  $('#tabA').classList.toggle('on',t==='analyser'); $('#tabH').classList.toggle('on',t==='historique');
+  $('#tabC').classList.toggle('on',t==='carte');
+  $('#tabA').classList.toggle('on',t==='analyser');
+  $('#tabH').classList.toggle('on',t==='historique');
+  $('#view-carte').classList.toggle('hidden',t!=='carte');
   $('#view-analyser').classList.toggle('hidden',t!=='analyser');
   $('#view-historique').classList.toggle('hidden',t!=='historique');
+  if(t==='carte') loadProfile();
   if(t==='historique') loadHistory();
+}
+
+/* ====================== CARTE JOUEUR (FC) ====================== */
+async function loadProfile(){
+  let p; try{ const r=await api('/api/profile'); if(!r.ok) return; p=await r.json(); }catch(e){ return; }
+  const V=$('#view-carte');
+  const attrs=p.attrs.map(a=>`<div class="a"><b>${a.value==null?'–':a.value}</b><span>${a.code}</span></div>`).join('');
+  const ovr=p.has_data?p.ovr:'–';
+  const empty=p.has_data?'':`<div class="fc-empty">Analyse ta première session pour révéler ta carte ⚽</div>`;
+  const xpPct=p.xp_need?Math.round(100*p.xp_in/p.xp_need):0;
+  const tt=p.totals, mm=Math.floor(tt.total_time_s/60);
+  const us=p.unlocks.slice().sort((a,b)=>(b.unlocked-a.unlocked)||(b.progress-a.progress));
+  const nUnlocked=p.unlocks.filter(u=>u.unlocked).length;
+  V.innerHTML=`
+    <div class="fcwrap fade">
+      <div class="fc tier-${p.tier}">
+        <div class="fc-stage">
+          <div class="fc-ovr"><div class="n">${ovr}</div><div class="p">${p.style.toUpperCase()}</div><div class="d"></div><div class="role">⚽</div></div>
+          <img class="fc-player" src="${p.avatar}" alt="">
+          ${empty}
+        </div>
+        <div class="fc-name">${p.user.display_name}</div>
+        <div class="fc-attrs">${attrs}</div>
+      </div>
+      <div class="tierchip">Carte ${p.tier_label}</div>
+    </div>
+
+    <div class="card lvl fade">
+      <div class="row"><div class="lt"><span class="badge">NIV ${p.level}</span> Niveau joueur</div>
+        <div class="xptxt">${p.xp_in} / ${p.xp_need} XP</div></div>
+      <div class="xpbar"><div class="xpfill" data-w="${xpPct}"></div></div>
+    </div>
+
+    <div class="grid" style="margin-top:14px">
+      <div class="card stat"><div class="k">📊 Sessions</div><div class="v">${tt.sessions}</div></div>
+      <div class="card stat"><div class="k">⚽ Jongles cumulés</div><div class="v">${tt.total_juggles}</div></div>
+      <div class="card stat"><div class="k">⏱️ Temps total</div><div class="v">${mm}<small> min</small></div></div>
+      <div class="card stat"><div class="k">🔥 Meilleure série</div><div class="v">${tt.best_streak}</div></div>
+    </div>
+
+    <div class="seclabel">Capacités à débloquer · ${nUnlocked}/${p.unlocks.length}</div>
+    <div class="unl">${us.map(u=>`
+      <div class="u ${u.unlocked?'on':''}"><div class="uic">${u.icon}</div>
+        <div class="t"><b>${u.label}</b><span>${u.desc}</span>
+        ${u.unlocked?'':`<div class="ut"><div class="uf" style="width:${Math.round(u.progress*100)}%"></div></div>`}</div></div>`).join('')}
+    </div>`;
+  requestAnimationFrame(()=>setTimeout(()=>{const f=V.querySelector('.xpfill');if(f)f.style.width=f.dataset.w+'%';},150));
 }
 
 /* ====================== ANALYSE ====================== */
@@ -259,7 +361,7 @@ function poll(job){
     try{
       const r=await api('/api/job/'+job); if(!r.ok) throw new Error('Job introuvable');
       const j=await r.json(); setProg(j.pct||0,j.label);
-      if(j.status==='done'){ clearInterval(t); renderResult(j); loadHistory(); }
+      if(j.status==='done'){ clearInterval(t); renderResult(j); loadHistory(); loadProfile(); }
       else if(j.status==='error'){ clearInterval(t); fail(j.error||'Erreur inconnue'); }
     }catch(e){ clearInterval(t); fail(e.message); }
   },1100);

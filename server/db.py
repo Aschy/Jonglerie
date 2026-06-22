@@ -132,6 +132,19 @@ def list_sessions(user_id):
         return [dict(r) for r in rows]
 
 
+def list_sessions_full(user_id):
+    """Toutes les sessions avec leurs metriques completes (pour le profil joueur)."""
+    with _conn() as c:
+        rows = c.execute("""SELECT id,created_at,metrics_json FROM sessions
+            WHERE user_id=? ORDER BY created_at ASC""", (user_id,)).fetchall()
+    out = []
+    for r in rows:
+        d = dict(id=r["id"], created_at=r["created_at"])
+        d["result"] = json.loads(r["metrics_json"]) if r["metrics_json"] else None
+        out.append(d)
+    return out
+
+
 def get_session(user_id, session_id):
     with _conn() as c:
         r = c.execute("SELECT * FROM sessions WHERE user_id=? AND id=?",

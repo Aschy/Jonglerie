@@ -25,6 +25,7 @@ import cv2
 from fastapi import FastAPI, UploadFile, File, HTTPException, Header, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 BASE  = Path(__file__).resolve().parent.parent
 SRC   = BASE / "src"
@@ -37,7 +38,7 @@ JOBS_D.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(SRC))
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # pour db/auth
 import analyzer_yolo as AY                # noqa: E402
-import db, auth                           # noqa: E402
+import db, auth, gamify                   # noqa: E402
 
 try:
     cv2.setNumThreads(max(1, os.cpu_count() or 1))
@@ -195,6 +196,18 @@ def session_detail(session_id: int, user=Depends(current_user)):
     if not s:
         raise HTTPException(404, "Session introuvable")
     return s
+
+
+@app.get("/api/profile")
+def profile(user=Depends(current_user)):
+    """Carte joueur facon FC : OVR, attributs, niveau/XP, palier, deblocages."""
+    return gamify.build_profile(user, db.list_sessions_full(user["id"]))
+
+
+# avatars + assets statiques (cartes joueur)
+ASSETS = WEB / "assets"
+ASSETS.mkdir(parents=True, exist_ok=True)
+app.mount("/assets", StaticFiles(directory=str(ASSETS)), name="assets")
 
 
 if __name__ == "__main__":
