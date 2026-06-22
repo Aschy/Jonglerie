@@ -86,7 +86,7 @@ def count_contacts(traj, fps):
     un vrai rebond fait plonger/remonter le ballon d'une fraction notable de son
     diametre -> coupe les micro-oscillations (faux positifs)."""
     diam = traj.get('ball_diam') or 0.0
-    prom = max(8.0, 0.45 * diam)
+    prom = max(8.0, 0.35 * diam)      # seuil conservateur, ajustable (vérité terrain)
     p, _ = find_peaks(traj['ys'], prominence=prom, distance=int(0.12 * fps))
     return [int(c) for c in p]
 
