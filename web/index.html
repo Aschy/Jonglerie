@@ -95,6 +95,13 @@
   .lr .l{background:linear-gradient(135deg,#7cff54,#22c55e);color:#06210a;display:grid;place-items:center}
   .lr .r{background:rgba(255,255,255,.08);color:var(--txt);display:grid;place-items:center}
 
+  .kv{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--stroke)}
+  .kv:last-child{border-bottom:0}
+  .kv b{font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px}
+  .kv .vv{font-weight:800;font-size:18px;letter-spacing:-.3px}
+  .kv .vv small{color:var(--mut);font-weight:600;font-size:12px}
+  .sub{color:var(--mut);font-size:12px;font-weight:500;margin:-8px 0 14px}
+
   video{width:100%;border-radius:14px;margin-top:6px;background:#000;display:block}
   .actions{display:flex;gap:10px;margin-top:16px}
   .actions .btn{flex:1;text-align:center;text-decoration:none}
@@ -170,7 +177,15 @@
     </div>
 
     <div class="card sec fade">
+      <h3>Dynamique du ballon</h3>
+      <div id="dyn"></div>
+      <div class="note" id="dynnote"></div>
+    </div>
+
+    <div class="card sec fade">
       <h3>Qualité technique</h3>
+      <div class="sub">Le <b>contrôle</b> mesure la régularité de la hauteur des arcs : plus le ballon
+        revient à une hauteur constante, plus la maîtrise est élevée.</div>
       <div id="quality"></div>
     </div>
 
@@ -279,6 +294,21 @@ function render(j,job){
   lr.querySelector('.l').style.flex=L; lr.querySelector('.r').style.flex=R;
   lr.querySelector('.l').textContent=`Gauche · ${L} (${Math.round(100*L/T)}%)`;
   lr.querySelector('.r').textContent=`${Math.round(100*R/T)}% · ${R} Droite`;
+
+  // dynamique du ballon (hauteurs + vitesse)
+  const d=m.ball_dynamics||{};
+  const val=(v,unit)=> v==null ? '—' : `${v}<small> ${unit}</small>`;
+  const dyn=[
+    ['🔻 Hauteur au toucher', val(d.contact_height_diam,'⌀')],
+    ['🔺 Hauteur max en l\'air', val(d.apex_height_max_diam,'⌀')],
+    ['📈 Hauteur moyenne des arcs', val(d.apex_height_mean_diam,'⌀')],
+    ['⚡ Vitesse moyenne', val(d.speed_mean_kmh_est,'km/h')],
+    ['🚀 Vitesse max', val(d.speed_max_kmh_est,'km/h')],
+  ];
+  $('#dyn').innerHTML=dyn.map(([k,v])=>
+    `<div class="kv"><b>${k}</b><div class="vv">${v}</div></div>`).join('');
+  $('#dynnote').textContent='⌀ = diamètres de ballon (~22 cm). Vitesse estimée '+
+    '(caméra unique, profondeur non mesurée → ordre de grandeur).';
 
   // quality
   const q=[

@@ -77,6 +77,22 @@ def _run_analysis(job_id: str, video_path: Path, out_dir: Path):
             pass
 
 
+@app.on_event("startup")
+def _warm_model():
+    """Charge le modele YOLO une fois au demarrage (cache) pour que la 1re analyse
+    ne paie pas le ~3.7s de chargement. Tolerant si le modele est absent."""
+    if not Path(MODEL).exists():
+        print("[warn] modele absent au demarrage:", MODEL); return
+    try:
+        import numpy as np
+        from yolo_onnx import get_detector
+        det = get_detector(MODEL, conf=0.10, imgsz=640)
+        det.detect_ball((np.zeros((64, 64, 3), dtype="uint8")))   # warmup
+        print(f"[+] modele YOLO prechauffe (backend={det.backend})")
+    except Exception as e:
+        print("[warn] prechauffage modele echoue:", e)
+
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     return (WEB / "index.html").read_text(encoding="utf-8")

@@ -22,7 +22,7 @@ Usage :
 """
 import cv2, numpy as np, json, os, sys
 import analyzer as A
-from yolo_onnx import YOLOv8ONNX
+from yolo_onnx import get_detector
 import kick_motion as KM
 from scipy.signal import find_peaks
 
@@ -30,41 +30,40 @@ from scipy.signal import find_peaks
 def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
     """Detecte le ballon par YOLO sur chaque frame -> trajectoire dense interpolee.
 
-    progress_cb(frac) est appele periodiquement avec une fraction 0..1 couvrant
-    les DEUX passes YOLO (detection principale + rattrapage des trous), pour que
-    la barre de progression ne stagne pas pendant la 2e passe.
+    Optimisation (resultats IDENTIQUES) : UNE seule inference YOLO par frame.
+    La passe 1 garde en cache les candidats bas seuil des frames non detectees,
+    que le gapfill reutilise SANS re-inferer (supprime ~1/3 du calcul).
+    progress_cb(frac) recoit une fraction 0..1 (l'inference est en passe 1).
     """
-    det = YOLOv8ONNX(onnx, conf=conf, imgsz=640)
+    det = get_detector(onnx, conf=conf, imgsz=640)
     N = len(frames)
     xs = np.full(N, np.nan); ys = np.full(N, np.nan); meas = np.zeros(N, bool)
+    rs = np.full(N, np.nan)              # rayon du ballon detecte (echelle hauteurs/vitesse)
+    cand_cache = {}                       # i -> candidats bas seuil (frames non detectees)
 
-    # --- passe 1 : detection principale (0 .. 0.6 de la progression) ---------
+    # --- passe 1 : UNE inference / frame (detection + cache candidats) --------
     for i, fr in enumerate(frames):
-        b = det.detect_ball(fr)
-        if b:
-            xs[i], ys[i], meas[i] = b[0], b[1], True
+        best, cands = det.detect_ball_and_candidates(fr, low_conf=0.05)
+        if best:
+            xs[i], ys[i], rs[i], meas[i] = best[0], best[1], best[2], True
+        else:
+            cand_cache[i] = cands
         if progress_cb and (i % 4 == 0 or i == N - 1):
-            progress_cb(0.6 * (i + 1) / N)
+            progress_cb(0.97 * (i + 1) / N)
 
     if gapfill:
-        # --- passe 2 : rattrapage gate dans les trous (0.6 .. 1.0) -----------
-        # candidat YOLO a tres bas seuil PRES de la position predite (evite tout
-        # faux positif lointain).
+        # --- rattrapage gate : candidats DEJA calcules, pres de la position predite
         idx = np.arange(N); g = ~np.isnan(xs)
         px = np.interp(idx, idx[g], xs[g]); py = np.interp(idx, idx[g], ys[g])
-        gaps = [i for i in range(N) if not meas[i]]
-        G = max(len(gaps), 1)
-        for j, i in enumerate(gaps):
+        for i in list(cand_cache.keys()):
             best, bd = None, 40**2
-            for (x, y, r, sc) in det.detect_ball_candidates(frames[i], conf=0.05):
+            for (x, y, r, sc) in cand_cache[i]:
                 d = (x - px[i])**2 + (y - py[i])**2
                 if d < bd:
                     bd, best = d, (x, y)
             if best:
                 xs[i], ys[i], meas[i] = best[0], best[1], True
-            if progress_cb and (j % 4 == 0 or j == G - 1):
-                progress_cb(0.6 + 0.4 * (j + 1) / G)
-    elif progress_cb:
+    if progress_cb:
         progress_cb(1.0)
 
     idx = np.arange(N); g = ~np.isnan(xs)
@@ -73,7 +72,11 @@ def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
     xs[~g] = np.interp(idx[~g], idx[g], xs[g])
     ys[~g] = np.interp(idx[~g], idx[g], ys[g])
     ys_s = np.convolve(ys, np.ones(2)/2, mode='same')
-    return dict(x=xs, y=ys, ys=ys_s, meas=meas, N=N)
+    # echelle : diametre median du ballon detecte (px) — rend hauteurs/vitesses
+    # independantes de la resolution et interpretables (en diametres de ballon)
+    rmeas = rs[~np.isnan(rs)]
+    ball_diam = float(2 * np.median(rmeas)) if rmeas.size else None
+    return dict(x=xs, y=ys, ys=ys_s, meas=meas, N=N, ball_diam=ball_diam)
 
 
 def count_contacts(traj, fps):

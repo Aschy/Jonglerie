@@ -211,6 +211,28 @@ def compute_metrics(traj, contacts, fps):
     ps = np.array([v for v in by_zone.values() if v]) / max(n, 1)
     variety = float(-(ps*np.log(ps)).sum()/np.log(len(BodyZone.ZONES))) if n else 0.0
 
+    # --- Dynamique du ballon : hauteurs (bas/haut) + vitesse ------------------
+    # Echelle = diametre median du ballon (px) -> valeurs en "diametres de ballon"
+    # (independant de la resolution). Estimation km/h via Ø reel ~22 cm (monoculaire,
+    # profondeur ignoree -> ordre de grandeur, pas une mesure exacte).
+    diam = traj.get('ball_diam')
+    x = traj['x']
+    contact_h = np.array([bz.feet - y[p] for p in contacts], float) if contacts else np.array([0.0])
+    speed_px_s = (np.hypot(np.diff(x), np.diff(y)) * fps) if N > 1 else np.array([0.0])
+    KMH = 0.22 * 3.6                       # (diam/s) -> km/h si Ø = 22 cm
+    pd = lambda v: round(float(v)/diam, 1) if diam else None
+    kmh = lambda v: round(float(v)/diam*KMH, 1) if diam else None
+    ball_dynamics = dict(
+        ball_diam_px          = round(diam, 1) if diam else None,
+        contact_height_diam   = pd(np.mean(contact_h)),     # hauteur au toucher (bas)
+        apex_height_mean_diam = pd(np.mean(apex_h)),        # hauteur moyenne en l'air
+        apex_height_max_diam  = pd(np.max(apex_h)),         # hauteur max (haut)
+        speed_mean_diam_s     = pd(np.median(speed_px_s)),
+        speed_max_diam_s      = pd(np.percentile(speed_px_s, 95)),
+        speed_mean_kmh_est    = kmh(np.median(speed_px_s)),
+        speed_max_kmh_est     = kmh(np.percentile(speed_px_s, 95)),
+    )
+
     return dict(
         duration_s=round(duration, 2),
         total_juggles=n,
@@ -224,6 +246,7 @@ def compute_metrics(traj, contacts, fps):
         variety=round(variety, 2),
         drops=drops, longest_streak=longest_streak,
         mean_interval_s=round(float(np.mean(intervals)), 2) if len(intervals) else None,
+        ball_dynamics=ball_dynamics,
         touches=touches,
     )
 
