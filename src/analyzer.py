@@ -227,9 +227,9 @@ def compute_metrics(traj, contacts, fps):
         contact_height_diam   = pd(np.mean(contact_h)),     # hauteur au toucher (bas)
         apex_height_mean_diam = pd(np.mean(apex_h)),        # hauteur moyenne en l'air
         apex_height_max_diam  = pd(np.max(apex_h)),         # hauteur max (haut)
-        speed_mean_diam_s     = pd(np.median(speed_px_s)),
+        speed_mean_diam_s     = pd(np.mean(speed_px_s)),
         speed_max_diam_s      = pd(np.percentile(speed_px_s, 95)),
-        speed_mean_kmh_est    = kmh(np.median(speed_px_s)),
+        speed_mean_kmh_est    = kmh(np.mean(speed_px_s)),
         speed_max_kmh_est     = kmh(np.percentile(speed_px_s, 95)),
     )
 
