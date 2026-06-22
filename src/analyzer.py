@@ -174,7 +174,7 @@ class BodyZone:
 # --------------------------------------------------------------------------- #
 DIFFICULTY = {"pied": 1.0, "cuisse/genou": 0.8, "poitrine": 1.2, "tete": 1.6}
 
-def compute_metrics(traj, contacts, fps):
+def compute_metrics(traj, contacts, fps, calib=None):
     N = traj['N']; duration = N / fps; y = traj['ys']
     bz = BodyZone(traj)
     touches = []
@@ -219,18 +219,27 @@ def compute_metrics(traj, contacts, fps):
     x = traj['x']
     contact_h = np.array([bz.feet - y[p] for p in contacts], float) if contacts else np.array([0.0])
     speed_px_s = (np.hypot(np.diff(x), np.diff(y)) * fps) if N > 1 else np.array([0.0])
-    KMH = 0.22 * 3.6                       # (diam/s) -> km/h si Ø = 22 cm
-    pd = lambda v: round(float(v)/diam, 1) if diam else None
-    kmh = lambda v: round(float(v)/diam*KMH, 1) if diam else None
+    # Echelle reelle si calibration fournie (ballon de diametre connu, ex. taille 5 = 22 cm)
+    ball_cm = (calib or {}).get('ball_real_cm')         # cm par diametre de ballon
+    pd  = lambda v: round(float(v)/diam, 1) if diam else None                 # en diametres
+    cm  = lambda v: round(float(v)/diam*ball_cm, 1) if (diam and ball_cm) else None  # en cm
+    kmh = lambda v: round(float(v)/diam*ball_cm/100*3.6, 1) if (diam and ball_cm) else None
     ball_dynamics = dict(
         ball_diam_px          = round(diam, 1) if diam else None,
+        ball_real_cm          = ball_cm,
+        calibrated            = bool(diam and ball_cm),
+        # hauteurs : en diametres de ballon ET en cm reels (si calibre)
         contact_height_diam   = pd(np.mean(contact_h)),     # hauteur au toucher (bas)
-        apex_height_mean_diam = pd(np.mean(apex_h)),        # hauteur moyenne en l'air
+        contact_height_cm     = cm(np.mean(contact_h)),
+        apex_height_mean_diam = pd(np.mean(apex_h)),
+        apex_height_mean_cm   = cm(np.mean(apex_h)),
         apex_height_max_diam  = pd(np.max(apex_h)),         # hauteur max (haut)
+        apex_height_max_cm    = cm(np.max(apex_h)),
+        # vitesse : en diametres/s ET km/h reels (estimation monoculaire)
         speed_mean_diam_s     = pd(np.mean(speed_px_s)),
         speed_max_diam_s      = pd(np.percentile(speed_px_s, 95)),
-        speed_mean_kmh_est    = kmh(np.mean(speed_px_s)),
-        speed_max_kmh_est     = kmh(np.percentile(speed_px_s, 95)),
+        speed_mean_kmh        = kmh(np.mean(speed_px_s)),
+        speed_max_kmh         = kmh(np.percentile(speed_px_s, 95)),
     )
 
     return dict(

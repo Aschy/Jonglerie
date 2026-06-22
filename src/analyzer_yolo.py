@@ -80,8 +80,14 @@ def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
 
 
 def count_contacts(traj, fps):
-    """Contacts = minima de hauteur (inversion de vitesse verticale)."""
-    p, _ = find_peaks(traj['ys'], prominence=8, distance=int(0.12 * fps))
+    """Contacts = minima de hauteur (inversion de vitesse verticale).
+
+    Seuil de prominence CALIBRE sur le diametre du ballon (resolution-independant) :
+    un vrai rebond fait plonger/remonter le ballon d'une fraction notable de son
+    diametre -> coupe les micro-oscillations (faux positifs)."""
+    diam = traj.get('ball_diam') or 0.0
+    prom = max(8.0, 0.45 * diam)
+    p, _ = find_peaks(traj['ys'], prominence=prom, distance=int(0.12 * fps))
     return [int(c) for c in p]
 
 
@@ -101,13 +107,15 @@ def fuse_contacts(traj, frames, ball_contacts, fps):
     return sorted(final), energy, kicks
 
 
-def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=True,
-                 progress_cb=None, max_side=1280, max_frames=2400):
+def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=False,
+                 progress_cb=None, max_side=1280, max_frames=2400, calib=None):
     """Analyse complete d'une video. progress_cb(pct, label) remonte la progression
     (0-100) avec un libelle d'etape, pour piloter une barre de progression.
 
     max_side : borne la plus grande dimension des frames (memoire + vitesse) ;
-    max_frames : garde-fou sur les videos trop longues."""
+    max_frames : garde-fou sur les videos trop longues ;
+    use_kick_fusion=False : comptage conservateur (ballon seul) -> moins de FP ;
+    calib : {ball_real_cm, player_height_cm} -> hauteurs en cm + vitesse km/h reels."""
     def report(pct, label):
         if progress_cb:
             progress_cb(pct, label)
@@ -149,7 +157,7 @@ def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=True,
         contacts = ball
 
     report(80, "Calcul des métriques")
-    metrics = A.compute_metrics(traj, contacts, fps)
+    metrics = A.compute_metrics(traj, contacts, fps, calib=calib)
     score = A.compute_score(metrics)
     json.dump(dict(metrics=metrics, score=score),
               open(os.path.join(out_dir, "metrics.json"), "w"), indent=2, ensure_ascii=False)
