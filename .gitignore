@@ -14,3 +14,6 @@ out_yolo/
 # Frames extraites
 frames/
 allframes/
+# Runtime du service web (uploads, jobs, modèles)
+data/
+models/

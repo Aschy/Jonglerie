@@ -27,8 +27,12 @@ import kick_motion as KM
 from scipy.signal import find_peaks
 
 
-def track_with_yolo(frames, onnx, conf=0.10, gapfill=True):
-    """Detecte le ballon par YOLO sur chaque frame -> trajectoire dense interpolee."""
+def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
+    """Detecte le ballon par YOLO sur chaque frame -> trajectoire dense interpolee.
+
+    progress_cb(done, total) est appele periodiquement pendant la detection
+    (phase la plus longue) pour remonter la progression a l'UI.
+    """
     det = YOLOv8ONNX(onnx, conf=conf, imgsz=640)
     N = len(frames)
     xs = np.full(N, np.nan); ys = np.full(N, np.nan); meas = np.zeros(N, bool)
@@ -36,6 +40,8 @@ def track_with_yolo(frames, onnx, conf=0.10, gapfill=True):
         b = det.detect_ball(fr)
         if b:
             xs[i], ys[i], meas[i] = b[0], b[1], True
+        if progress_cb and (i % 4 == 0 or i == N - 1):
+            progress_cb(i + 1, N)
 
     if gapfill:
         # Rattrapage gate : dans les trous, on cherche un candidat YOLO a tres bas
@@ -84,19 +90,46 @@ def fuse_contacts(traj, frames, ball_contacts, fps):
     return sorted(final), energy, kicks
 
 
-def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=True):
+def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=True,
+                 progress_cb=None, max_side=1280, max_frames=2400):
+    """Analyse complete d'une video. progress_cb(pct, label) remonte la progression
+    (0-100) avec un libelle d'etape, pour piloter une barre de progression.
+
+    max_side : borne la plus grande dimension des frames (memoire + vitesse) ;
+    max_frames : garde-fou sur les videos trop longues."""
+    def report(pct, label):
+        if progress_cb:
+            progress_cb(pct, label)
+
     os.makedirs(out_dir, exist_ok=True)
+    report(2, "Lecture de la vidéo")
     cap = cv2.VideoCapture(video_path); fps = cap.get(cv2.CAP_PROP_FPS) or 30
     frames = []
     while True:
         ok, fr = cap.read()
         if not ok: break
+        if max_side:
+            h, w = fr.shape[:2]
+            m = max(h, w)
+            if m > max_side:
+                s = max_side / m
+                fr = cv2.resize(fr, (int(round(w * s)), int(round(h * s))),
+                                interpolation=cv2.INTER_AREA)
         frames.append(fr)
+        if len(frames) >= max_frames:
+            break
     cap.release()
+    if len(frames) < 5:
+        raise RuntimeError("Vidéo illisible ou trop courte (aucune frame exploitable).")
     print(f"[+] {len(frames)} frames @ {fps:.0f} fps — detection YOLOv8 (toutes frames)...")
 
-    traj = track_with_yolo(frames, onnx)
+    # Detection = phase la plus longue -> mappee sur 5%..72%
+    def det_cb(done, total):
+        report(5 + int(67 * done / max(total, 1)), "Détection du ballon (YOLOv8)")
+    traj = track_with_yolo(frames, onnx, progress_cb=det_cb)
     print(f"[+] couverture detection {100*traj['meas'].mean():.0f}%")
+
+    report(74, "Comptage des touches")
     ball = count_contacts(traj, fps)
     if use_kick_fusion:
         contacts, _, _ = fuse_contacts(traj, frames, ball, fps)
@@ -104,12 +137,16 @@ def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=True)
     else:
         contacts = ball
 
+    report(80, "Calcul des métriques")
     metrics = A.compute_metrics(traj, contacts, fps)
     score = A.compute_score(metrics)
     json.dump(dict(metrics=metrics, score=score),
               open(os.path.join(out_dir, "metrics.json"), "w"), indent=2, ensure_ascii=False)
+
+    report(84, "Génération de la vidéo annotée")
     A.render_video(frames, traj, contacts, metrics, fps,
                    os.path.join(out_dir, "annotated.mp4"))
+    report(100, "Terminé")
     print(f"[+] {metrics['total_juggles']} jongles | score {score['score_0_100']}/100 ({score['grade']})")
     return dict(metrics=metrics, score=score)
 

@@ -114,3 +114,33 @@ fois le compteur de coups de pied propre (rattrape les jongles des trous) et le
 *POC développé itérativement sur 3 vidéos réelles. Détection ballon, comptage,
 métriques, score et rendu sont fonctionnels ; la détection est le composant à
 faire évoluer (fine-tuning) pour un usage en production.*
+
+---
+
+## Application web (upload → stats)
+
+Une interface web minimaliste et **mobile-first** permet d'uploader une vidéo et
+d'obtenir directement métriques + score + vidéo annotée. L'analyse tourne en
+**tâche de fond** avec une barre de progression live (l'inférence YOLO prend
+~1-2 min sur CPU).
+
+```
+web/index.html      interface (HTML/CSS/JS vanilla, aucun build)
+server/app.py       backend FastAPI : upload, job async, polling, résultats
+server/requirements.txt   dépendances runtime (sans torch)
+deploy/             setup.sh (idempotent) · get_model.sh · systemd · nginx
+```
+
+### Déploiement (Ubuntu)
+
+```bash
+# en root sur le serveur
+git clone https://github.com/Aschy/Jonglerie.git /opt/jonglerie
+bash /opt/jonglerie/deploy/setup.sh
+# -> http://IP_DU_SERVEUR/
+```
+
+`setup.sh` installe nginx + un venv runtime, exporte le modèle `yolov8m.onnx`
+(via un venv jetable, étape ponctuelle), pose le service `systemd` et le
+reverse-proxy `:80`. Local : `pip install -r server/requirements.txt` puis
+`uvicorn app:app --app-dir server` (et `bash deploy/get_model.sh` pour le modèle).
