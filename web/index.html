@@ -137,7 +137,7 @@
   .fc-attrs .a{display:flex;align-items:baseline;gap:9px;font-weight:800;font-size:16px}
   .fc-attrs .a b{width:24px;text-align:right;font-variant-numeric:tabular-nums}
   .fc-attrs .a span{font-size:12px;font-weight:700;opacity:.85;letter-spacing:.4px}
-  .fc-empty{position:absolute;left:14px;right:14px;bottom:12px;text-align:center;font-size:12.5px;font-weight:600;opacity:.9;z-index:3}
+  .fc-empty{position:absolute;left:14px;right:14px;bottom:12px;text-align:center;font-size:12.5px;font-weight:700;z-index:3;color:#0a0a0a;text-shadow:0 1px 4px rgba(255,255,255,.6)}
   .tierchip{margin-top:12px;font-size:12px;font-weight:800;letter-spacing:.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--stroke);color:var(--mut)}
 
   /* ---------- NIVEAU / XP ---------- */
@@ -179,7 +179,6 @@
         <div class="lerr" id="lerr"></div>
         <button class="btn" id="lbtn" type="submit" style="width:100%">Se connecter</button>
       </form>
-      <div class="lhint">Comptes de démo :<br><code>steph</code> / <code>steph123</code> &nbsp;·&nbsp; <code>liam</code> / <code>liam123</code></div>
     </div>
   </section>
 
@@ -253,7 +252,7 @@ function showLogin(){ $('#app').classList.add('hidden'); $('#login').classList.r
 function showApp(){
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
   const av=$('#ava');
-  av.textContent=''; av.style.backgroundImage=`url(/assets/${USER.username}.png?v=3)`;
+  av.textContent=''; av.style.backgroundImage=`url(/assets/${USER.username}.png?v=4)`;
   av.style.backgroundSize='cover'; av.style.backgroundPosition='top center';
   $('#uname').textContent=USER.display_name;
   $('#urole').textContent=`${USER.role} · ${USER.height_cm} cm · ballon ${USER.ball_diam_cm} cm`;
@@ -304,7 +303,7 @@ async function loadProfile(){
       <div class="fc tier-${p.tier}">
         <div class="fc-stage">
           <div class="fc-ovr"><div class="n">${ovr}</div><div class="p">${p.style.toUpperCase()}</div><div class="d"></div><div class="role">⚽</div></div>
-          <img class="fc-player" src="${p.avatar}?v=3" alt="">
+          <img class="fc-player" src="${p.avatar}?v=4" alt="">
           ${empty}
         </div>
         <div class="fc-name">${p.user.display_name}</div>

@@ -19,7 +19,7 @@ BALL_SIZE5_CM = 22.0   # diametre d'un ballon de foot taille 5
 # Utilisateurs de depart (mots de passe simples pour le PoC)
 SEED_USERS = [
     dict(username="steph", password="steph123", display_name="Steph",
-         role="adulte", height_cm=168, ball_diam_cm=BALL_SIZE5_CM),
+         role="adulte", height_cm=173, ball_diam_cm=BALL_SIZE5_CM),
     dict(username="liam",  password="liam123",  display_name="Liam",
          role="enfant", height_cm=142, ball_diam_cm=BALL_SIZE5_CM),
 ]
