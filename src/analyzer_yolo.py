@@ -119,7 +119,7 @@ def fuse_contacts(traj, frames, ball_contacts, fps):
 
 
 def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=False,
-                 progress_cb=None, max_side=1280, max_frames=2400, calib=None):
+                 progress_cb=None, max_side=1280, max_frames=2400, calib=None, player=None):
     """Analyse complete d'une video. progress_cb(pct, label) remonte la progression
     (0-100) avec un libelle d'etape, pour piloter une barre de progression.
 
@@ -175,7 +175,7 @@ def analyze_yolo(video_path, out_dir, onnx="yolov8m.onnx", use_kick_fusion=False
 
     report(84, "Génération de la vidéo annotée")
     A.render_video(frames, traj, contacts, metrics, fps,
-                   os.path.join(out_dir, "annotated.mp4"))
+                   os.path.join(out_dir, "annotated.mp4"), score=score, player=player)
     report(100, "Terminé")
     print(f"[+] {metrics['total_juggles']} jongles | score {score['score_0_100']}/100 ({score['grade']})")
     return dict(metrics=metrics, score=score)

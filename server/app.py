@@ -83,7 +83,9 @@ def _run_analysis(job_id, video_path: Path, out_dir: Path, user, filename):
         def cb(pct, label):
             _set(job_id, pct=int(pct), label=label)
         res = AY.analyze_yolo(str(video_path), str(out_dir), onnx=MODEL,
-                              progress_cb=cb, calib=calib)
+                              progress_cb=cb, calib=calib,
+                              player={"display_name": user["display_name"],
+                                      "username": user["username"]})
         session_id = db.add_session(user["id"], res, filename=filename)
         _set(job_id, status="done", pct=100, label="Terminé", result=res,
              session_id=session_id, video_url=f"/api/job/{job_id}/video")

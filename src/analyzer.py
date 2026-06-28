@@ -294,35 +294,131 @@ def compute_score(m):
 
 
 # --------------------------------------------------------------------------- #
-#  6. RENDU : video annotee                                                    #
+#  6. RENDU : video annotee — HUD futuriste + watermark                        #
 # --------------------------------------------------------------------------- #
-def render_video(frames, traj, contacts, metrics, fps, out_path):
+APP_NAME = "JONGLERIE"
+_LIME = (58, 255, 182); _CYAN = (255, 210, 80); _DARKP = (14, 18, 14)
+_WHITE = (248, 255, 248); _MUT = (150, 165, 150)
+_FONT = cv2.FONT_HERSHEY_DUPLEX
+
+
+def _panel(img, x1, y1, x2, y2, alpha=0.5, accent=_LIME):
+    H, W = img.shape[:2]
+    x1 = max(0, x1); y1 = max(0, y1); x2 = min(W, x2); y2 = min(H, y2)
+    if x2 <= x1 or y2 <= y1:
+        return
+    sub = img[y1:y2, x1:x2]
+    img[y1:y2, x1:x2] = cv2.addWeighted(sub, 1 - alpha, np.full_like(sub, _DARKP), alpha, 0)
+    cv2.line(img, (x1, y1), (x2, y1), accent, 2)
+    t = 16
+    cv2.line(img, (x1, y1), (x1, y1 + t), accent, 2)
+    cv2.line(img, (x2 - 1, y1), (x2 - 1, y1 + t), accent, 2)
+
+
+def _txt(img, s, org, sc, col=_WHITE, th=2):
+    cv2.putText(img, s, (org[0] + 1, org[1] + 2), _FONT, sc, (0, 0, 0), th + 2, cv2.LINE_AA)
+    cv2.putText(img, s, org, _FONT, sc, col, th, cv2.LINE_AA)
+
+
+def _txt_r(img, s, right, y, sc, col=_WHITE, th=2):
+    (tw, _), _ = cv2.getTextSize(s, _FONT, sc, th); _txt(img, s, (right - tw, y), sc, col, th)
+
+
+def _txt_c(img, s, cx, y, sc, col=_WHITE, th=2):
+    (tw, _), _ = cv2.getTextSize(s, _FONT, sc, th); _txt(img, s, (cx - tw // 2, y), sc, col, th)
+
+
+def render_video(frames, traj, contacts, metrics, fps, out_path, score=None, player=None):
     h, w = frames[0].shape[:2]
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    vw = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
-    cset = set(contacts); count = 0; flash = 0; trail = []
-    cmap = {"pied":(80,220,90),"cuisse/genou":(0,200,255),
-            "poitrine":(255,140,0),"tete":(0,80,255)}
-    tinfo = {c['frame']: c for c in metrics['touches']}
+    vw = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+    S = w / 720.0                                   # echelle responsive
+    N = len(frames); cset = set(contacts); count = 0; flash = 0; trail = []
+    ys = traj['ys']
+    bd = metrics.get('ball_dynamics', {}) or {}
+    diam = bd.get('ball_diam_px') or 0.0; rad = diam / 2.0
+    ball_cm = bd.get('ball_real_cm'); cmpp = (ball_cm / diam) if (ball_cm and diam) else None
+    gy = traj.get('ground_y'); gok = bool(traj.get('ground_reliable')) and gy is not None
+    feet = float(np.percentile(traj['y'], 95))
+    pname = (player or {}).get('display_name', '') if isinstance(player, dict) else (player or '')
+    recap = int(2.6 * fps); cw = int(86 * S)
+
     for i, bgr in enumerate(frames):
         f = bgr.copy()
         bx, by = int(traj['x'][i]), int(traj['y'][i])
-        trail.append((bx, by)); trail = trail[-14:]
-        for j, (tx, ty) in enumerate(trail):                     # trainee
-            cv2.circle(f, (tx, ty), 2, (255, 255, 255), -1)
-        col = (0, 0, 255) if traj['meas'][i] else (160, 160, 160)
-        cv2.circle(f, (bx, by), 13, col, 2)
+        base_y = gy if gok else feet
+        clr = max(0.0, base_y - (by + rad))
+        hlabel = (f"{clr*cmpp:.0f} cm" if cmpp else (f"{clr/diam:.1f}Ø" if diam else None))
+
+        # --- ligne de sol + connecteur vertical sol->ballon ---
+        if gok:
+            gyy = int(gy)
+            for xx in range(0, w, int(30 * S)):
+                cv2.line(f, (xx, gyy), (xx + int(15 * S), gyy), _LIME, 2)
+            _txt(f, "SOL", (int(8 * S), gyy - int(7 * S)), 0.5 * S, _LIME, 1)
+            cv2.line(f, (bx, int(by + rad)), (bx, gyy), _CYAN, 2)
+
+        # --- trainee fading lime ---
+        trail.append((bx, by)); trail = trail[-16:]
+        for j, (tx, ty) in enumerate(trail):
+            a = (j + 1) / len(trail)
+            cv2.circle(f, (tx, ty), max(1, int(3 * a * S)),
+                       (int(50 * a + 30), int(255 * a), int(170 * a + 30)), -1)
+        cv2.circle(f, (bx, by), int(14 * S), _LIME if traj['meas'][i] else _MUT, 2)
         if i in cset:
             count += 1; flash = 6
-            z = tinfo[i]['zone']
         if flash > 0:
-            cv2.circle(f, (bx, by), 20, (0, 255, 255), 3); flash -= 1
-        # bandeau
-        cv2.rectangle(f, (0, 0), (w, 54), (20, 20, 20), -1)
-        cv2.putText(f, f"JONGLES: {count}", (10, 36),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
-        cv2.putText(f, f"{i/fps:4.1f}s", (w-90, 36),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 230, 255), 2)
+            cv2.circle(f, (bx, by), int(22 * S), _CYAN, 3); flash -= 1
+        if hlabel:
+            _txt(f, hlabel, (bx + int(18 * S), by - int(6 * S)), 0.6 * S, _WHITE, 1)
+
+        # --- bandeau HUD haut ---
+        bar = int(58 * S); _panel(f, 0, 0, w, bar, 0.5)
+        _txt(f, "JONGLES", (int(14 * S), int(22 * S)), 0.45 * S, _MUT, 1)
+        _txt(f, str(count), (int(14 * S), int(50 * S)), 1.15 * S, _LIME, 3)
+        tempo = count / max(i / fps, 0.5)
+        _txt(f, "TEMPO", (int(150 * S), int(22 * S)), 0.45 * S, _MUT, 1)
+        _txt(f, f"{tempo:.1f}/s", (int(150 * S), int(48 * S)), 0.7 * S, _CYAN, 2)
+        _txt_r(f, f"{i/fps:.1f}s", w - int(14 * S), int(44 * S), 0.75 * S, _WHITE, 2)
+
+        # --- mini-courbe de hauteur (defilante) ---
+        y0 = h - cw; _panel(f, 0, y0, w, h, 0.45)
+        _txt(f, "HAUTEUR", (int(12 * S), y0 + int(18 * S)), 0.42 * S, _MUT, 1)
+        win = int(5 * fps); a0 = max(0, i - win); seg = ys[a0:i + 1]
+        if len(seg) > 2:
+            mn, mx = float(seg.min()), float(seg.max()); rg = (mx - mn) or 1.0
+            pad = int(10 * S); gh = cw - int(26 * S); gtop = y0 + int(22 * S)
+            pts = [(int(pad + k / (len(seg) - 1) * (w - 2 * pad)),
+                    int(gtop + (v - mn) / rg * gh)) for k, v in enumerate(seg)]
+            for k in range(1, len(pts)):
+                cv2.line(f, pts[k - 1], pts[k], _LIME, 2)
+            for c in contacts:
+                if a0 <= c <= i:
+                    cv2.circle(f, pts[c - a0], int(4 * S), _CYAN, -1)
+
+        # --- watermark : app + joueur ---
+        _txt_r(f, APP_NAME, w - int(12 * S), y0 - int(26 * S), 0.6 * S, _LIME, 2)
+        if pname:
+            _txt_r(f, "@" + pname, w - int(12 * S), y0 - int(8 * S), 0.5 * S, _WHITE, 1)
+
+        # --- recap final ---
+        if score and i >= N - recap:
+            ov = np.zeros_like(f); f = cv2.addWeighted(f, 0.22, ov, 0.78, 0)
+            cx = w // 2
+            _txt_c(f, APP_NAME, cx, int(h * 0.20), 0.7 * S, _LIME, 2)
+            if pname:
+                _txt_c(f, pname.upper(), cx, int(h * 0.20) + int(28 * S), 0.55 * S, _MUT, 1)
+            _txt_c(f, score['grade'], cx, int(h * 0.42), 3.2 * S, _LIME, 6)
+            _txt_c(f, f"{score['score_0_100']} / 100", cx, int(h * 0.50), 0.9 * S, _WHITE, 2)
+            apex = bd.get('apex_height_max_cm') or bd.get('apex_height_max_diam')
+            au = "cm" if bd.get('apex_height_max_cm') else "Ø"
+            gc = bd.get('ground_clearance_cm')
+            rows = [f"{metrics['total_juggles']} JONGLES   -   {metrics['tempo_touches_per_s']}/s",
+                    f"HAUTEUR MAX  {apex} {au}" if apex is not None else None,
+                    (f"SOL -> BALLON  {gc['min']}-{gc['max']} cm" if gc else None)]
+            yy = int(h * 0.60)
+            for r in [r for r in rows if r]:
+                _txt_c(f, r, cx, yy, 0.62 * S, _WHITE, 1); yy += int(34 * S)
+
         vw.write(f)
     vw.release()
 
