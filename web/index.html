@@ -413,13 +413,19 @@ function renderResult(j){
   const d=m.ball_dynamics||{};
   const hv=(cm,dia)=> cm!=null?`${cm}<small> cm</small>`:(dia!=null?`${dia}<small> ⌀</small>`:'—');
   const sv=v=> v!=null?`${v}<small> km/h</small>`:'—';
+  const gc=d.ground_clearance_cm;
+  const gcv=gc?`${gc.mean}<small> cm</small>`:'—';
   const dyn=[['🔻 Hauteur au toucher',hv(d.contact_height_cm,d.contact_height_diam)],
     ['🔺 Hauteur max en l\'air',hv(d.apex_height_max_cm,d.apex_height_max_diam)],
     ['📈 Hauteur moyenne des arcs',hv(d.apex_height_mean_cm,d.apex_height_mean_diam)],
+    ['🟥 Sol → bas du ballon (moy.)',gcv],
     ['⚡ Vitesse moyenne',sv(d.speed_mean_kmh)],['🚀 Vitesse max',sv(d.speed_max_kmh)]];
   $('#dyn').innerHTML=dyn.map(([k,v])=>`<div class="kv"><b>${k}</b><div class="vv">${v}</div></div>`).join('');
-  $('#dynnote').textContent=d.calibrated?`Calibré sur le ballon (${d.ball_real_cm} cm). Vitesse = estimation (caméra unique).`
+  let note=d.calibrated?`Calibré sur le ballon (${d.ball_real_cm} cm). Vitesse = estimation (caméra unique).`
     :'Hauteurs en diamètres de ballon (non calibré).';
+  if(gc) note+=` Sol→ballon : min ${gc.min} cm · max ${gc.max} cm (par jongle).`;
+  else if(d.calibrated) note+=' Hauteur sol indisponible (joueur/pieds hors champ).';
+  $('#dynnote').textContent=note;
   const q=[['Régularité du rythme',m.rhythm_regularity],['Contrôle',m.control_score],['Équilibre G/D',m.balance_LR],['Variété technique',m.variety]];
   $('#quality').innerHTML=q.map(([k,v])=>{const p=Math.round(100*v);return `<div class="bar"><div class="top"><b>${k}</b><span>${p}%</span></div><div class="track"><div class="fill" data-w="${p}"></div></div></div>`}).join('');
   $('#vid').src=j.video_url; $('#dl').href=j.video_url;

@@ -3,7 +3,8 @@ import os, cv2, numpy as np
 class YOLOv8ONNX:
     """Detecteur YOLOv8 via ONNX. Backend onnxruntime si dispo (plus rapide sur CPU),
     sinon repli sur OpenCV DNN. Aucune dependance torch/ultralytics au runtime."""
-    BALL_CLASS = 32  # 'sports ball' dans COCO
+    BALL_CLASS = 32   # 'sports ball' dans COCO
+    PERSON_CLASS = 0  # 'person' -> le bas de sa boite ~ pieds au sol
 
     def __init__(self, onnx='yolov8m.onnx', conf=0.25, iou=0.45, imgsz=640):
         self.conf, self.iou, self.sz = conf, iou, imgsz
@@ -29,37 +30,46 @@ class YOLOv8ONNX:
             self.net.setInput(blob); raw = self.net.forward()    # (1, 84, 8400)
         return raw[0].T, w, h                                    # (8400, 84)
 
-    # --- UNE seule inference -> meilleur ballon ET tous les candidats bas seuil --
+    def _best_box(self, out, w, h, cls, conf):
+        """Meilleure boite (x, y, bw, bh, score) de la classe cls apres NMS, ou None."""
+        cc = out[:, 4 + cls]
+        keep = cc > conf
+        boxes, scores = [], []
+        for (cx, cy, bw, bh, *_), sc in zip(out[keep], cc[keep]):
+            x = (cx - bw/2)/self.sz*w; y = (cy - bh/2)/self.sz*h
+            boxes.append([int(x), int(y), int(bw/self.sz*w), int(bh/self.sz*h)])
+            scores.append(float(sc))
+        if not boxes:
+            return None
+        idx = cv2.dnn.NMSBoxes(boxes, scores, conf, self.iou)
+        if len(idx) == 0:
+            return None
+        flat = np.array(idx).flatten()
+        i = int(flat[np.argmax([scores[int(j)] for j in flat])])
+        bx, by, bw, bh = boxes[i]
+        return (bx, by, bw, bh, scores[i])
+
+    # --- UNE seule inference -> ballon + candidats + boite personne --------------
     def detect_ball_and_candidates(self, bgr, low_conf=0.05):
-        """Retourne (best, candidates) en UN forward pass :
-          best       = (x, y, r, conf) apres NMS (seuil self.conf), ou None
-          candidates = [(x, y, r, score), ...] au-dessus de low_conf (sans NMS),
-                       pour le rattrapage gate du gapfill — SANS re-inferer."""
+        """Retourne (best, candidates, person) en UN forward pass :
+          best       = (x, y, r, conf) du ballon apres NMS, ou None
+          candidates = [(x, y, r, score), ...] ballon au-dessus de low_conf (gapfill)
+          person     = (x, y, w, h) de la meilleure boite 'personne', ou None
+                       (le bas y+h ~ pieds au sol, pour la hauteur sol->ballon)."""
         out, w, h = self._forward(bgr)
         bc = out[:, 4 + self.BALL_CLASS]
 
-        # candidats bas seuil (gapfill)
         kc = bc > low_conf
         cands = [(float(cx/self.sz*w), float(cy/self.sz*h),
                   float(max(bw, bh)/self.sz*w/2), float(sc))
                  for (cx, cy, bw, bh, *_), sc in zip(out[kc], bc[kc])]
 
-        # meilleur ballon (seuil + NMS)
-        keep = bc > self.conf
-        boxes, scores = [], []
-        for (cx, cy, bw, bh, *_), sc in zip(out[keep], bc[keep]):
-            x = (cx - bw/2)/self.sz*w; y = (cy - bh/2)/self.sz*h
-            boxes.append([int(x), int(y), int(bw/self.sz*w), int(bh/self.sz*h)])
-            scores.append(float(sc))
-        best = None
-        if boxes:
-            idx = cv2.dnn.NMSBoxes(boxes, scores, self.conf, self.iou)
-            if len(idx):
-                flat = np.array(idx).flatten()
-                i = int(flat[np.argmax([scores[int(j)] for j in flat])])
-                bx, by, bw, bh = boxes[i]
-                best = (bx + bw/2, by + bh/2, max(bw, bh)/2, scores[i])
-        return best, cands
+        bb = self._best_box(out, w, h, self.BALL_CLASS, self.conf)
+        best = (bb[0] + bb[2]/2, bb[1] + bb[3]/2, max(bb[2], bb[3])/2, bb[4]) if bb else None
+
+        pb = self._best_box(out, w, h, self.PERSON_CLASS, 0.35)
+        person = (pb[0], pb[1], pb[2], pb[3]) if pb else None
+        return best, cands, person
 
     # --- API historiques (compat) : reutilisent le forward unique ---------------
     def detect_ball(self, bgr):

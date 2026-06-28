@@ -40,14 +40,17 @@ def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
     xs = np.full(N, np.nan); ys = np.full(N, np.nan); meas = np.zeros(N, bool)
     rs = np.full(N, np.nan)              # rayon du ballon detecte (echelle hauteurs/vitesse)
     cand_cache = {}                       # i -> candidats bas seuil (frames non detectees)
+    person_bottoms = []                   # bas de la boite 'personne' (~ pieds au sol)
 
     # --- passe 1 : UNE inference / frame (detection + cache candidats) --------
     for i, fr in enumerate(frames):
-        best, cands = det.detect_ball_and_candidates(fr, low_conf=0.05)
+        best, cands, person = det.detect_ball_and_candidates(fr, low_conf=0.05)
         if best:
             xs[i], ys[i], rs[i], meas[i] = best[0], best[1], best[2], True
         else:
             cand_cache[i] = cands
+        if person:
+            person_bottoms.append(person[1] + person[3])   # y + h
         if progress_cb and (i % 4 == 0 or i == N - 1):
             progress_cb(0.97 * (i + 1) / N)
 
@@ -76,7 +79,15 @@ def track_with_yolo(frames, onnx, conf=0.10, gapfill=True, progress_cb=None):
     # independantes de la resolution et interpretables (en diametres de ballon)
     rmeas = rs[~np.isnan(rs)]
     ball_diam = float(2 * np.median(rmeas)) if rmeas.size else None
-    return dict(x=xs, y=ys, ys=ys_s, meas=meas, N=N, ball_diam=ball_diam)
+    # sol = bas median de la boite 'personne' (pieds au sol). Fiable seulement si la
+    # personne est detectee souvent ET ses pieds ne sont pas coupes en bas du cadre.
+    Himg = frames[0].shape[0]
+    ground_y, ground_reliable = None, False
+    if len(person_bottoms) >= max(5, 0.3 * N):
+        ground_y = float(np.median(person_bottoms))
+        ground_reliable = ground_y < Himg - 3
+    return dict(x=xs, y=ys, ys=ys_s, meas=meas, N=N, ball_diam=ball_diam,
+                ground_y=ground_y, ground_reliable=ground_reliable)
 
 
 def count_contacts(traj, fps):

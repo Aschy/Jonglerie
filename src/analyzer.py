@@ -224,6 +224,23 @@ def compute_metrics(traj, contacts, fps, calib=None):
     pd  = lambda v: round(float(v)/diam, 1) if diam else None                 # en diametres
     cm  = lambda v: round(float(v)/diam*ball_cm, 1) if (diam and ball_cm) else None  # en cm
     kmh = lambda v: round(float(v)/diam*ball_cm/100*3.6, 1) if (diam and ball_cm) else None
+    # --- Hauteur SOL -> BAS DU BALLON, par jongle (au moment du contact) -------
+    # sol = bas de la boite 'personne' (pieds) ; bas du ballon = centre + rayon.
+    ground_y = traj.get('ground_y'); ground_ok = traj.get('ground_reliable')
+    ground_clear_cm = None
+    if ground_y is not None and ground_ok and diam and ball_cm:
+        rad = diam / 2.0
+        cmpp = ball_cm / diam                       # cm par pixel (echelle locale ballon)
+        for t in touches:
+            ball_bottom = traj['y'][t['frame']] + rad
+            clr = max(0.0, (ground_y - ball_bottom)) * cmpp
+            t['ground_clearance_cm'] = round(float(clr), 1)
+        vals = [t['ground_clearance_cm'] for t in touches]
+        if vals:
+            ground_clear_cm = dict(mean=round(float(np.mean(vals)), 1),
+                                   min=round(float(np.min(vals)), 1),
+                                   max=round(float(np.max(vals)), 1))
+
     ball_dynamics = dict(
         ball_diam_px          = round(diam, 1) if diam else None,
         ball_real_cm          = ball_cm,
@@ -235,6 +252,9 @@ def compute_metrics(traj, contacts, fps, calib=None):
         apex_height_mean_cm   = cm(np.mean(apex_h)),
         apex_height_max_diam  = pd(np.max(apex_h)),         # hauteur max (haut)
         apex_height_max_cm    = cm(np.max(apex_h)),
+        # hauteur sol -> bas du ballon (cm) : moyenne / min / max sur la session
+        ground_clearance_cm   = ground_clear_cm,
+        ground_detected       = bool(ground_y is not None and ground_ok),
         # vitesse : en diametres/s ET km/h reels (estimation monoculaire)
         speed_mean_diam_s     = pd(np.mean(speed_px_s)),
         speed_max_diam_s      = pd(np.percentile(speed_px_s, 95)),
